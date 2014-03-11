@@ -25,45 +25,96 @@
  */
 
 import java.io.*;
+import java.util.ArrayList;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
+
+import javax.swing.JFrame;
+
 import lejos.robotics.navigation.DifferentialPilot;
-import lejos.nxt.Motor;
 import lejos.nxt.*;
 import lejos.pc.comm.NXTConnector;
 import lejos.util.Delay;
 
+class PointValue {
+	public double x;
+	public double y;
+	public int light;
+	
+	PointValue(double xinit, double yinit, int lightinit) 
+	{
+		this.x = xinit;
+		this.y = yinit;
+		this.light = lightinit;
+	}
+}
+
 public class Part2PC {
+	private enum Mode {
+		Record, Pause, Test
+	}
+	public Mode mode = Mode.Record;
 	public static TrackerReader tracker;
 	public static DataOutputStream outData;
 	public static NXTConnector link;
 	public static DifferentialPilot pilot;
 	public static LightSensor light;
+	public ArrayList<PointValue> pointVals;
 
 	public Part2PC() {
+		pointVals = new ArrayList<PointValue>();
 		pilot = new DifferentialPilot(5.5f, 5.5f, 
 							Motor.A, Motor.C);
 		tracker = new TrackerReader();
 		light = new LightSensor(SensorPort.S2, true);
 		pilot.setTravelSpeed(1);
-		
-		Delay.msDelay(2000);
 		tracker.start();
-		while (true) {
-			/*
-			 * possible tracker values: x, y, a, theta, targetx, targety
-			 */
-			double x = tracker.x;
-			double y = tracker.y;
-			double theta = tracker.theta;
-			double targetx = tracker.targetx;
-			double targety = tracker.targety;
-			int l = light.getLightValue();
-            Delay.msDelay(500);
-            System.out.println("x = " + tracker.x + " y = " + tracker.y + " light = " + l);
-            pilot.travel(0.5);
-        }
+		
+		while (true) 
+		{
+			System.out.println(this.mode.toString());
+			switch (mode)
+			{
+				case Record:
+					recordDataPoint();
+					break;
+				case Pause:
+					
+					break;
+				case Test:
+					
+				break; 
+				default:
+					
+			}
+		}
+	}
+	
+	public void recordDataPoint() {
+		// move the robot into a new position for recording a data point
+		Delay.msDelay(500);
+		pilot.travel(0.5);
+		
+		/* possible tracker values: x, y, a, theta, targetx, targety */
+		double x = tracker.x;
+		double y = tracker.y;
+		double theta = tracker.theta;
+		double targetx = tracker.targetx;
+		double targety = tracker.targety;
+		int l = light.getLightValue();
+		
+		// record the data point
+		System.out.println("x = " + tracker.x + 
+						  " y = " + tracker.y + " light = " + l);
+		pointVals.add(new PointValue(x, y, l));
 	}
 
-	public static void main(String[] args) {
+	public void saveData() {
+		
+	}
+    
+	public static void main(String[] args) 
+	{
 		Part2PC pc = new Part2PC();
 	}
 
