@@ -25,10 +25,9 @@ public class WekaHandler {
 		dataSet.setClassIndex(dataSet.numAttributes() - 1);
 	}
 
-	public boolean getPart1Classification(int lightVal) {
+	public int getPart1Classification(int dist) {
 		Instance instance = dataSet.firstInstance();
-
-		instance.setValue(dataSet.attribute("light"), lightVal);
+		instance.setValue(dataSet.attribute("pedDist"), dist);
 		
 		// PREDICTION
 		double classLabelRet = 0.0;
@@ -37,7 +36,7 @@ public class WekaHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return classLabelRet > 0.1; // I hate java.
+		return (int)classLabelRet;
 	}
 	
 	public MovementType getPart2Classification(int lightVal, int ultrasound) {

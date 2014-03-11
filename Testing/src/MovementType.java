@@ -32,13 +32,13 @@ public enum MovementType {
 	public static int getPower(MovementType mode) {
 		switch (mode) {
 		case ForwardVerySlow:
-			return 5;
-		case ForwardSlow:
 			return 10;
-		case ForwardFast:
-			return 15;
-		case ForwardVeryFast:
+		case ForwardSlow:
 			return 20;
+		case ForwardFast:
+			return 30;
+		case ForwardVeryFast:
+			return 40;
 		}
 		
 		return 0;
