@@ -51,7 +51,7 @@ public class Control extends JFrame {
 	private static WekaHandler weka;
 
 	private enum Mode {
-		Stop, Wait, Part1, Part2, Part3, Part4
+		Stop, Wait, Part1EM, Part1KM, Part2, Part3, Part4
 	}
 
 	private static Mode mode = Mode.Wait;
@@ -112,12 +112,20 @@ public class Control extends JFrame {
 
 		while (mode != Mode.Stop) {
 			switch (mode) {
-			case Part1:
+			case Part1EM:
 				if (dataCollection) {
 					recordDataPart1();
 					move(movementMode);
 				} else {
-					doWekaPart1();
+					doWekaPart1EM();
+				}
+				break;
+			case Part1KM:
+				if (dataCollection) {
+					recordDataPart1();
+					move(movementMode);
+				} else {
+					doWekaPart1KMeans();
 				}
 				break;
 			case Part2:
@@ -150,8 +158,13 @@ public class Control extends JFrame {
 		}
 	}
 
-	private static void doWekaPart1() {
-		int result = weka.getPart1Classification(rightUltrasound.getDistance());
+	private static void doWekaPart1EM() {
+		int result = weka.getEMCluster(rightUltrasound.getDistance());
+		move(MovementType.intToMovementType(result));
+	}
+	
+	private static void doWekaPart1KMeans() {
+		int result = weka.getKmeansCluster(rightUltrasound.getDistance());
 		move(MovementType.intToMovementType(result));
 	}
 
@@ -202,24 +215,11 @@ public class Control extends JFrame {
 
 	private static boolean resetWeka() {
 		final JFileChooser fc = new JFileChooser();
-		int ret = fc.showOpenDialog(NXTrc);
-		String modelfile, arffile;
-		arffile = modelfile = "";
+		String arfffile = "";
 
-		if (ret == JFileChooser.APPROVE_OPTION) {
+		if (fc.showOpenDialog(NXTrc) == JFileChooser.APPROVE_OPTION) {
 			try {
-				modelfile = fc.getSelectedFile().getPath();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			return false;
-		}
-
-		ret = fc.showOpenDialog(NXTrc);
-		if (ret == JFileChooser.APPROVE_OPTION) {
-			try {
-				arffile = fc.getSelectedFile().getPath();
+				arfffile = fc.getSelectedFile().getPath();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -228,7 +228,7 @@ public class Control extends JFrame {
 		}
 
 		try {
-			weka = new WekaHandler(modelfile, arffile, 1);
+			weka = new WekaHandler(arfffile);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -330,6 +330,7 @@ public class Control extends JFrame {
 	}
 
 	private static void toggleCollection() {
+		switchModes();
 		dataCollection = !dataCollection;
 		setCollectionHeader();
 		
@@ -348,8 +349,8 @@ public class Control extends JFrame {
 	}
 
 	private static void setCollectionHeader() {
-		modeLbl.setText(dataCollection ? "DATA COLLECTION MODE"
-				: "DOING STUFF MODE");
+		modeLbl.setText(dataCollection ? "DATA COLLECTION MODE\n\n"
+				: "DOING STUFF MODE\n\n");
 	}
 
 	private static class ButtonHandler implements MouseListener, KeyListener {
@@ -379,25 +380,37 @@ public class Control extends JFrame {
 
 			switch (key) {
 			case '1':
-				if (mode != Mode.Part1) {
+				if (mode != Mode.Part1EM) {
 					switchModes();
 
 					if (dataCollection) {
-						mode = Mode.Part1;
+						mode = Mode.Part1EM;
 					} else if (resetWeka()) {
 						enableSensors();
-						mode = Mode.Part1;
-						// lineFollowMode = false;
+						mode = Mode.Part1EM;
 					}
 				}
 				break;
 			case '2':
-				if (resetWeka()) {
-					enableSensors();
-					// lineFollowMode = false;
-					mode = Mode.Part2;
+				if (mode != Mode.Part1KM) {
+					switchModes();
+
+					if (dataCollection) {
+						mode = Mode.Part1KM;
+					} else if (resetWeka()) {
+						enableSensors();
+						mode = Mode.Part1KM;
+					}
 				}
 				break;
+			// Part 2 is handled in a separate project
+//			case '2':
+//				if (resetWeka()) {
+//					enableSensors();
+//					// lineFollowMode = false;
+//					mode = Mode.Part2;
+//				}
+//				break;
 			case '3':
 				if (resetWeka()) {
 					enableSensors();

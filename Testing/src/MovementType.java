@@ -5,19 +5,22 @@ public enum MovementType {
 	// Weka classification gives us an integer
 	public static MovementType intToMovementType(int intType) {
 		switch(intType) {
-		case 1:
+		// These are used by part 1
+		case 0:
 			return ForwardVerySlow;
-		case 2:
+		case 1:
 			return ForwardSlow;
-		case 3:
+		case 2:
 			return ForwardFast;
-		case 4:
+		case 3:
 			return ForwardVeryFast;
-		case 5:
+			
+		// These aren't
+		case 4:
 			return Backward;
-		case 6:
+		case 5:
 			return TurnRight;
-		case 7:
+		case 6:
 			return TurnLeft;
 		default:
 			return Stop;
