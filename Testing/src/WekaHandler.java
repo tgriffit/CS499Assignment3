@@ -1,91 +1,120 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
+import weka.core.converters.ArffLoader;
 import weka.classifiers.Classifier;
+import weka.clusterers.Clusterer;
+import weka.clusterers.EM;
+import weka.clusterers.SimpleKMeans;
 
 public class WekaHandler {
-	private Classifier classifier;
+	private EM em;
+	private SimpleKMeans kmeans;
 	private Instances dataSet;
 
-	// This was loosely based on the following code (but has changed substantially):
+	private Map<Integer, Integer> emClusters = new HashMap<Integer, Integer>();
+	private Map<Integer, Integer> kmClusters = new HashMap<Integer, Integer>();;
+
+	// This was loosely based on the following code (but has changed
+	// substantially):
 	// http://stackoverflow.com/questions/8212980/weka-example-simple-classification-of-lines-of-text
-	public WekaHandler(String modelfile, String arffile, int part) throws FileNotFoundException,
-			Exception {
-		
-		classifier = (Classifier) SerializationHelper.read(new FileInputStream(
-					modelfile));
-		
-		BufferedReader reader = new BufferedReader(new FileReader(arffile));
-		dataSet = new Instances(reader);
-		dataSet.setClassIndex(dataSet.numAttributes() - 1);
+	public WekaHandler(String arfffile) throws FileNotFoundException, Exception {
+
+		// Default weka options for each clusterer (with -N changed to 4)
+		String[] emOptions = { "-I", "100", "-N", "4", "-M", "1.0E-6", "-S",
+				"100" };
+		String[] kmeansOptions = { "-N", "4", "-I", "500", "-S", "10" };
+
+		ArffLoader loader = new ArffLoader();
+		loader.setFile(new File(arfffile));
+		dataSet = loader.getStructure();
+
+		Instance i;
+		while ((i = loader.getNextInstance(dataSet)) != null) {
+			dataSet.add(i);
+		}
+
+		em = new EM();
+		em.setOptions(emOptions);
+		em.buildClusterer(dataSet);
+		buildClusterOrdering(emClusters, em);
+
+		kmeans = new SimpleKMeans();
+		kmeans.setOptions(kmeansOptions);
+		kmeans.buildClusterer(dataSet);
+		buildClusterOrdering(kmClusters, kmeans);
 	}
 
-	public int getPart1Classification(int dist) {
+	public int getEMCluster(int dist) {
 		Instance instance = dataSet.firstInstance();
 		instance.setValue(dataSet.attribute("pedDist"), dist);
-		
+
 		// PREDICTION
-		double classLabelRet = 0.0;
+		int cluster = 0;
 		try {
-			classLabelRet = classifier.classifyInstance(instance);
+			cluster = em.clusterInstance(instance);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return (int)classLabelRet;
-	}
-	
-	public MovementType getPart2Classification(int lightVal, int ultrasound) {
-		Instance instance = dataSet.firstInstance();
-		instance.setValue(dataSet.attribute("light"), lightVal);
-		instance.setValue(dataSet.attribute("ultrasound"), ultrasound);
-		
-		double classLabelRet = 0.0;
-		try {
-			classLabelRet = classifier.classifyInstance(instance);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return MovementType.intToMovementType((int)classLabelRet);
+		return emClusters.get(cluster);
 	}
 
-	public MovementType getPart3Classification(int lightVal, int ultrasound, int rightIR, int leftIR) {
+	public int getKmeansCluster(int dist) {
 		Instance instance = dataSet.firstInstance();
-		instance.setValue(dataSet.attribute("light"), lightVal);
-		instance.setValue(dataSet.attribute("ultrasound"), ultrasound);
-		instance.setValue(dataSet.attribute("rightIR"), rightIR);
-		instance.setValue(dataSet.attribute("leftIR"), leftIR);
-		
-		double classLabelRet = 0.0;
+		instance.setValue(dataSet.attribute("pedDist"), dist);
+
+		// PREDICTION
+		int classLabelRet = 0;
 		try {
-			classLabelRet = classifier.classifyInstance(instance);
+			classLabelRet = kmeans.clusterInstance(instance);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		return MovementType.intToMovementType((int)classLabelRet);
+		return classLabelRet;
 	}
-	
-	// This is an attempt to make Jockey react faster by having Weka handle fewer values. As far as
-	// I can tell, it didn't work.
-	public MovementType getPart3ClassificationNoUltrasound(int lightVal, int rightIR, int leftIR) {
-		Instance instance = dataSet.firstInstance();
-		instance.setValue(dataSet.attribute("light"), lightVal);
-		instance.setValue(dataSet.attribute("rightIR"), rightIR);
-		instance.setValue(dataSet.attribute("leftIR"), leftIR);
-		
-		double classLabelRet = 0.0;
+
+	// I hate Java. This would literally be one line in C#.
+	private void buildClusterOrdering(Map<Integer, Integer> map, Clusterer clusterer) {
 		try {
-			classLabelRet = classifier.classifyInstance(instance);
+			ArrayList<Double> list = new ArrayList<Double>();
+
+			if (clusterer instanceof EM) {
+				for (int i = 0; i < clusterer.numberOfClusters(); ++i) {
+					list.add(((EM)clusterer).getClusterModelsNumericAtts()[i][0][0]);
+				}
+			}
+			else if (clusterer instanceof SimpleKMeans) {
+				Instances centroids = ((SimpleKMeans)clusterer).getClusterCentroids();
+				for (int i = 0; i < centroids.numInstances(); ++i) {
+					list.add(centroids.instance(i).value(0));
+				}
+			}
+			else {
+				throw new Exception("WHAT DID YOU DO?!?");
+			}
+
+			ArrayList<Double> ordered = new ArrayList<Double>(list);
+			Collections.sort(ordered);
+
+			// Once this is done, the map will be a mapping of
+			// cluster numbers to the cluster's order in terms of
+			// distance (ie. a number from 0 to 3 mapping to
+			// ForwardVerySlow to ForwardVeryFast)
+			for (int i = 0; i < ordered.size(); ++i) {
+				map.put(list.lastIndexOf(ordered.get(i)), i);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		return MovementType.intToMovementType((int)classLabelRet);
 	}
 }
