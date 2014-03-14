@@ -60,6 +60,8 @@ public class Part2PC {
 	public static DifferentialPilot pilot;
 	public static LightSensor light;
 	public static UIHandler ui;
+	public String arfffile = null;
+	private WekaHandler weka = null;
 	public ArrayList<PointValue> pointVals;
 
 	public Part2PC() {
@@ -85,10 +87,14 @@ public class Part2PC {
 				recordDataPoint();
 				break;
 			case Pause:
-				showTestData();
+				
 				break;
 			case Test:
-
+				if (weka == null) {
+					arfffile = ui.getArffname();
+					weka = new WekaHandler(arfffile);
+				}
+				showTestData();
 				break;
 			default:
 			}
@@ -107,6 +113,8 @@ public class Part2PC {
 		System.out.println("x: " + x + " y: " + y + " theta: " + theta);
 		System.out.println("trackerx: " + targetx + " trackery: " + targety);
 		System.out.println("light: " + l);
+		int cluster = weka.getSomCluster(x, y);
+		System.out.println("Cluster num: " + cluster);
 	}
 	
 	public void recordDataPoint() {
@@ -130,7 +138,7 @@ public class Part2PC {
 		pointVals.add(new PointValue(x, y, l));
 		System.out.println("Num data pts: " + pointVals.size());
 		// move the robot into a new position for next data recording call
-		Delay.msDelay(500);
+		Delay.msDelay(300);
 		pilot.travel(0.5);
 	}
 

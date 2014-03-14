@@ -1,6 +1,8 @@
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
@@ -15,14 +17,17 @@ public class UIHandler {
 		Record, Pause, Test
 	}
 
-	Part2PC parent;
+	public String arfffile = null;
 	public Mode mode;
+	
+	Part2PC parent;
+	JFrame guiFrame;
 	JTextArea cmdText;
 	JTextArea modeDisplay;
 
 	public UIHandler(Part2PC p2) {
 		this.parent = p2;
-		JFrame guiFrame = new JFrame();
+		guiFrame = new JFrame();
 		this.mode = Mode.Pause;
 
 		guiFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -80,6 +85,26 @@ public class UIHandler {
 		guiFrame.setVisible(true);
 	}
 
+	private void getArffFromUser() {
+		final JFileChooser fc = new JFileChooser();
+
+		if (fc.showOpenDialog(guiFrame) == JFileChooser.APPROVE_OPTION) {
+			try {
+				this.arfffile = fc.getSelectedFile().getPath();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			System.out.println("Error getting arff filename");
+		}
+	}
+	
+	public String getArffname() {
+		if (arfffile == null)
+			getArffFromUser();
+		return this.arfffile;
+	}
+	
 	private void updateModeDisplay() {
 		modeDisplay.setText("Current Mode: [" + mode.toString() + "]");
 	}
