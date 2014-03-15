@@ -37,12 +37,11 @@ class Result1 extends Result {
 
 	String getHeader() {
 		return "@RELATION\tPedestrianAvoidance\n\n" + "@ATTRIBUTE\tpedDist\tNUMERIC\n"
-				//+ "@ATTRIBUTE\tMovementType\t" + MovementType.movementTypes()
 				+ "\n\n";
 	}
 
 	public String toString() {
-		return pedDist /*+ ", " + action.toString()*/ + "\n";
+		return pedDist + "\n";
 	}
 }
 
@@ -64,7 +63,7 @@ public class Control extends JFrame {
 	static MotorPort leftMotor = MotorPort.C;
 	static MotorPort rightMotor = MotorPort.A;
 
-	static LightSensor lightSensor = new LightSensor(SensorPort.S4);
+	static LightSensor lightSensor = new LightSensor(SensorPort.S2);
 	static UltrasonicSensor rightUltrasound = new UltrasonicSensor(
 			SensorPort.S3);
 	static UltrasonicSensor leftUltrasound = new UltrasonicSensor(SensorPort.S1);
@@ -237,66 +236,18 @@ public class Control extends JFrame {
 		return true;
 	}
 
-	// Movement functions for Part 1
-	// private static void turnLeft() {
-	// leftMotor.controlMotor(0, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void turnRight() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(5, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// // Movement functions for Part 2 and 3
-	// private static void driveForward() {
-	// leftMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveForwardFast() {
-	// leftMotor.controlMotor(50, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(50, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveBack() {
-	// leftMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void turnRightInPlace() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void turnLeftInPlace() {
-	// leftMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// }
-	//
-	// // Movement functions for part 3
-	// private static void backAndTurnLeft() {
-	// leftMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(12, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void arcForwardAndRight() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveBackSlow() {
-	// leftMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void hardLeft() {
-	// leftMotor.controlMotor(40, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.FORWARD);
-	// }
-
 	private static void driveForward(int power) {
 		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
+		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
+	}
+	
+	private static void turnRight(int power) {
+		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
+		rightMotor.controlMotor(power, BasicMotorPort.BACKWARD);
+	}
+	
+	private static void turnLeft(int power) {
+		leftMotor.controlMotor(power, BasicMotorPort.BACKWARD);
 		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
 	}
 
