@@ -1,5 +1,8 @@
 *.class
 
+# Ignore vim backup files
+*~
+
 # Package Files #
 *.war
 *.ear
