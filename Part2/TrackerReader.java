@@ -1,15 +1,14 @@
 //http://www.binarytides.com/java-socket-programming-tutorial/
 import java.io.*;
-import java.util.Map;
 import java.net.*;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class TrackerReader extends Thread
 {
+	public boolean hasConnection = false;
     public volatile double x;
     public volatile double y;
     public volatile double a;
@@ -35,7 +34,9 @@ public class TrackerReader extends Thread
             echo("Server socket created.Waiting for connection...");
 
             conn = s.accept();
-
+            
+            hasConnection = true;
+            
             //print the hostname and port number of the connection
             echo("Connection received from " + conn.getInetAddress().getHostName() + " : " + conn.getPort());
             String line , input = "";
@@ -62,7 +63,7 @@ public class TrackerReader extends Thread
                         theta = (Double) jsonObject.get("theta");
                         targetx = (Double) jsonObject.get("targetx");
                         targety = (Double) jsonObject.get("targety");
-                    }catch (ParseException e) {
+                    } catch (ParseException e) {
                         e.printStackTrace();
                     }
                 }
