@@ -70,7 +70,7 @@ public class Part2PC {
 		pilot = new DifferentialPilot(5.5f, 5.5f, Motor.A, Motor.C);
 		tracker = new TrackerReader();
 		light = new LightSensor(SensorPort.S2, true);
-		pilot.setTravelSpeed(1);
+		pilot.setTravelSpeed(2);
 		tracker.start();
 
 		System.out
@@ -87,7 +87,7 @@ public class Part2PC {
 				recordDataPoint();
 				break;
 			case Pause:
-				
+
 				break;
 			case Test:
 				if (weka == null) {
@@ -100,7 +100,7 @@ public class Part2PC {
 			}
 		}
 	}
-	
+
 	// print the data that is being received from tracker to syso
 	public void showTestData() {
 		double x = tracker.x;
@@ -108,15 +108,15 @@ public class Part2PC {
 		double theta = tracker.theta;
 		double targetx = tracker.targetx;
 		double targety = tracker.targety;
-		int l = light.getLightValue();
-		
+		int l = getQuantizedLight();
+
 		System.out.println("x: " + x + " y: " + y + " theta: " + theta);
 		System.out.println("trackerx: " + targetx + " trackery: " + targety);
 		System.out.println("light: " + l);
 		int cluster = weka.getSomCluster(x, y);
 		System.out.println("Cluster num: " + cluster);
 	}
-	
+
 	public void recordDataPoint() {
 		/* possible tracker values: x, y, a, theta, targetx, targety */
 		double x = tracker.x;
@@ -124,7 +124,7 @@ public class Part2PC {
 		double theta = tracker.theta;
 		double targetx = tracker.targetx;
 		double targety = tracker.targety;
-		int l = light.getLightValue();
+		int l = getQuantizedLight();
 
 		// dont record if data == 0.0 because no tracker.py colour has been
 		// selected
@@ -138,12 +138,31 @@ public class Part2PC {
 		pointVals.add(new PointValue(x, y, l));
 		System.out.println("Num data pts: " + pointVals.size());
 		// move the robot into a new position for next data recording call
-		Delay.msDelay(300);
-		pilot.travel(0.5);
+		Delay.msDelay(100);
+		pilot.travel(0.8);
 	}
 
 	public void saveData() {
 		writeArffFile(pointVals);
+	}
+
+	// gives a wider gap between the different light values to improve
+	// clustering
+	private int getQuantizedLight() {
+		int l = light.getLightValue();
+
+		if (l <= 45 && l >= 43)
+			return 100;
+		else if (l <= 42 && l >= 40)
+			return 80;
+		else if (l <= 39 && l >= 35)
+			return 60;
+		else if (l <= 34 && l >= 31)
+			return 40;
+		else if (l <= 30 && l >= 28)
+			return 20;
+
+		return 0;
 	}
 
 	private void writeArffFile(ArrayList<PointValue> results) {
