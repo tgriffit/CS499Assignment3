@@ -19,6 +19,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import agents.LoneAgent;
+import ReinforcementLearning.*;
 import lejos.nxt.*;
 import lejos.pc.comm.NXTConnector;
 import lejos.util.Delay;
@@ -37,18 +39,21 @@ class Result1 extends Result {
 
 	String getHeader() {
 		return "@RELATION\tPedestrianAvoidance\n\n" + "@ATTRIBUTE\tpedDist\tNUMERIC\n"
-				//+ "@ATTRIBUTE\tMovementType\t" + MovementType.movementTypes()
 				+ "\n\n";
 	}
 
 	public String toString() {
-		return pedDist /*+ ", " + action.toString()*/ + "\n";
+		return pedDist + "\n";
 	}
 }
 
 public class Control extends JFrame {
 
 	private static WekaHandler weka;
+	
+	// Reinforcement learning components
+	private static Environment environment;
+	private static LoneAgent agent;
 
 	private enum Mode {
 		Stop, Wait, Part1EM, Part1KM, Part2, Part3, Part4
@@ -64,7 +69,7 @@ public class Control extends JFrame {
 	static MotorPort leftMotor = MotorPort.C;
 	static MotorPort rightMotor = MotorPort.A;
 
-	static LightSensor lightSensor = new LightSensor(SensorPort.S4);
+	static LightSensor lightSensor = new LightSensor(SensorPort.S2);
 	static UltrasonicSensor rightUltrasound = new UltrasonicSensor(
 			SensorPort.S3);
 	static UltrasonicSensor leftUltrasound = new UltrasonicSensor(SensorPort.S1);
@@ -132,10 +137,9 @@ public class Control extends JFrame {
 				// doWekaPart2();
 				break;
 			case Part3:
-				// doWekaPart3();
-				break;
 			case Part4:
-				// doWekaPart4();
+				doReinforcementLearning();
+				break;
 			default:
 				stahp();
 				break;
@@ -168,27 +172,9 @@ public class Control extends JFrame {
 		move(MovementType.intToMovementType(result));
 	}
 
-	// private static void doWekaPart2() {
-	// MovementType result = weka.getPart2Classification(
-	// lightSensor.getLightValue(), ultrasoundSensor.getDistance());
-	// move(result);
-	// }
-
-	// private static void doWekaPart3() {
-	// MovementType result;
-	//
-	// if (lineFollowMode) {
-	// result = weka.getPart3ClassificationNoUltrasound(
-	// lightSensor.getLightValue(), rightIR.getDistance(),
-	// leftIR.getDistance());
-	// } else {
-	// result = weka.getPart3Classification(lightSensor.getLightValue(),
-	// ultrasoundSensor.getDistance(), rightIR.getDistance(),
-	// leftIR.getDistance());
-	// }
-	//
-	// move(result);
-	// }
+	private static void doReinforcementLearning() {
+		
+	}
 
 	private static void writeArffFile(ArrayList<Result> results) {
 		String filename = "output - " + System.currentTimeMillis() + ".arff";
@@ -236,67 +222,23 @@ public class Control extends JFrame {
 
 		return true;
 	}
-
-	// Movement functions for Part 1
-	// private static void turnLeft() {
-	// leftMotor.controlMotor(0, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void turnRight() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(5, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// // Movement functions for Part 2 and 3
-	// private static void driveForward() {
-	// leftMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveForwardFast() {
-	// leftMotor.controlMotor(50, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(50, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveBack() {
-	// leftMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void turnRightInPlace() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void turnLeftInPlace() {
-	// leftMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// }
-	//
-	// // Movement functions for part 3
-	// private static void backAndTurnLeft() {
-	// leftMotor.controlMotor(20, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(12, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void arcForwardAndRight() {
-	// leftMotor.controlMotor(20, BasicMotorPort.FORWARD);
-	// rightMotor.controlMotor(15, BasicMotorPort.FORWARD);
-	// }
-	//
-	// private static void driveBackSlow() {
-	// leftMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.BACKWARD);
-	// }
-	//
-	// private static void hardLeft() {
-	// leftMotor.controlMotor(40, BasicMotorPort.BACKWARD);
-	// rightMotor.controlMotor(30, BasicMotorPort.FORWARD);
-	// }
+	
+	private static void resetRL() {
+		
+	}
 
 	private static void driveForward(int power) {
 		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
+		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
+	}
+	
+	private static void turnRight(int power) {
+		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
+		rightMotor.controlMotor(power, BasicMotorPort.BACKWARD);
+	}
+	
+	private static void turnLeft(int power) {
+		leftMotor.controlMotor(power, BasicMotorPort.BACKWARD);
 		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
 	}
 
@@ -306,7 +248,7 @@ public class Control extends JFrame {
 		case ForwardSlow:
 		case ForwardFast:
 		case ForwardVeryFast:
-			driveForward(MovementType.getPower(movetype));
+			driveForward(mode == Mode.Part3 ? 20 : MovementType.getPower(movetype));
 			break;
 		default:
 			stahp();
@@ -403,28 +345,20 @@ public class Control extends JFrame {
 					}
 				}
 				break;
-			// Part 2 is handled in a separate project
-//			case '2':
-//				if (resetWeka()) {
-//					enableSensors();
-//					// lineFollowMode = false;
-//					mode = Mode.Part2;
-//				}
-//				break;
+				
 			case '3':
-				if (resetWeka()) {
-					enableSensors();
-					// lineFollowMode = true;
+				if (mode != Mode.Part3) {
+					resetRL();
 					mode = Mode.Part3;
 				}
 				break;
 			case '4':
-				if (resetWeka()) {
-					enableSensors();
-					// lineFollowMode = false;
-					mode = Mode.Part3;
+				if (mode != Mode.Part4) {
+					resetRL();
+					mode = Mode.Part4;
 				}
 				break;
+				
 
 			// Movement Modes!
 			case 'u':
