@@ -1,28 +1,27 @@
+package JockeyControl;
+
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.Panel;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
+import referees.OnePlayerReferee;
 import agents.LoneAgent;
+import algorithms.WatkinsSelector;
 import ReinforcementLearning.*;
 import lejos.nxt.*;
-import lejos.pc.comm.NXTConnector;
 import lejos.util.Delay;
 
 class Result {
@@ -47,13 +46,17 @@ class Result1 extends Result {
 	}
 }
 
-public class Control extends JFrame {
+public class JockeyControl extends JFrame {
 
 	private static WekaHandler weka;
 	
 	// Reinforcement learning components
 	private static Environment environment;
 	private static LoneAgent agent;
+	private static WatkinsSelector sel;
+	private static OnePlayerReferee ref;
+	private static double epsilon;
+	static final String agentFile = "AgentResults";
 
 	private enum Mode {
 		Stop, Wait, Part1EM, Part1KM, Part2, Part3, Part4
@@ -70,19 +73,17 @@ public class Control extends JFrame {
 	static MotorPort rightMotor = MotorPort.A;
 
 	static LightSensor lightSensor = new LightSensor(SensorPort.S2);
-	static UltrasonicSensor rightUltrasound = new UltrasonicSensor(
-			SensorPort.S3);
-	static UltrasonicSensor leftUltrasound = new UltrasonicSensor(SensorPort.S1);
-	static OpticalDistanceSensor leftIR = new OpticalDistanceSensor(
-			SensorPort.S4);
+	static UltrasonicSensor rightUltrasound = new UltrasonicSensor(SensorPort.S3);
+	static UltrasonicSensor frontUltrasound = new UltrasonicSensor(SensorPort.S4);
+	static UltrasonicSensor backUltrasound = new UltrasonicSensor(SensorPort.S1);
 
-	public static Control NXTrc;
+	public static JockeyControl NXTrc;
 
 	public static JLabel modeLbl;
 	public static JLabel commands;
 	public static ButtonHandler bh = new ButtonHandler();
 
-	public Control() {
+	public JockeyControl() {
 		Panel p = new Panel();
 		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
@@ -108,7 +109,7 @@ public class Control extends JFrame {
 	}
 
 	public static void main(String[] args) {
-		NXTrc = new Control();
+		NXTrc = new JockeyControl();
 		NXTrc.setVisible(true);
 		NXTrc.requestFocusInWindow();
 		NXTrc.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -120,25 +121,27 @@ public class Control extends JFrame {
 			case Part1EM:
 				if (dataCollection) {
 					recordDataPart1();
-					move(movementMode);
+					move(movementMode, movementMode);
 				} else {
-					doWekaPart1EM();
+					int result = doWekaPart1EM();
+					MovementType r = MovementType.intToMovementType(result);
+					move(r, r);
 				}
 				break;
 			case Part1KM:
 				if (dataCollection) {
 					recordDataPart1();
-					move(movementMode);
+					move(movementMode, movementMode);
 				} else {
-					doWekaPart1KMeans();
+					int result = doWekaPart1KMeans();
+					MovementType r = MovementType.intToMovementType(result);
+					move(r, r);
 				}
-				break;
-			case Part2:
-				// doWekaPart2();
 				break;
 			case Part3:
 			case Part4:
 				doReinforcementLearning();
+				mode = Mode.Wait;
 				break;
 			default:
 				stahp();
@@ -162,18 +165,36 @@ public class Control extends JFrame {
 		}
 	}
 
-	private static void doWekaPart1EM() {
-		int result = weka.getEMCluster(rightUltrasound.getDistance());
-		move(MovementType.intToMovementType(result));
+	private static int doWekaPart1EM() {
+		return weka.getEMCluster(rightUltrasound.getDistance());
 	}
 	
-	private static void doWekaPart1KMeans() {
-		int result = weka.getKmeansCluster(rightUltrasound.getDistance());
-		move(MovementType.intToMovementType(result));
+	private static int doWekaPart1KMeans() {
+		return weka.getKmeansCluster(rightUltrasound.getDistance());
 	}
 
 	private static void doReinforcementLearning() {
+		System.out.println("Starting episode");
 		
+		ref.episode(environment.getCurrentState());
+		
+		System.out.println("Reward: " + ref.getRewardForEpisode());
+		epsilon *= 0.99;
+		sel.setEpsilon(epsilon);
+	}
+	
+	public static void takeAction(Action action) {
+		MovementType direction = MovementType.ForwardSlow;
+		
+		if (action == Action.Right) {
+			direction = MovementType.TurnRight;
+		}
+		else if (action == Action.Left) {
+			direction = MovementType.TurnLeft;
+		}
+		
+		MovementType power = mode == Mode.Part4 ? MovementType.intToMovementType(doWekaPart1EM()) : direction;
+		move(direction, power);
 	}
 
 	private static void writeArffFile(ArrayList<Result> results) {
@@ -203,17 +224,13 @@ public class Control extends JFrame {
 		final JFileChooser fc = new JFileChooser();
 		String arfffile = "";
 
-		if (fc.showOpenDialog(NXTrc) == JFileChooser.APPROVE_OPTION) {
-			try {
-				arfffile = fc.getSelectedFile().getPath();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			return false;
-		}
-
 		try {
+			if (fc.showOpenDialog(NXTrc) == JFileChooser.APPROVE_OPTION) {
+				arfffile = fc.getSelectedFile().getPath();
+			} else {
+				return false;
+			}
+
 			weka = new WekaHandler(arfffile);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -224,7 +241,36 @@ public class Control extends JFrame {
 	}
 	
 	private static void resetRL() {
+		System.out.println(frontUltrasound.getDistance());
+		System.out.println(backUltrasound.getDistance());
+		System.out.println(lightSensor.getLightValue());
+		environment = new Environment(frontUltrasound, backUltrasound, lightSensor);
 		
+		File file = new File(agentFile + ".agt");
+		if (file.exists()) {
+			agent = (LoneAgent) LoneAgent.readAgent(agentFile, environment);
+			sel = (WatkinsSelector) agent.getAlgorithm();
+		}
+		else {
+			System.out.println("Creating a new agent.");
+			
+			sel = new WatkinsSelector(0.7);
+			epsilon=0.5; 
+			sel.setEpsilon(epsilon); 
+			sel.setGeometricAlphaDecay(); 
+			sel.setAlpha(0.3); 
+			
+			agent = new LoneAgent(environment, sel);
+			
+			System.out.println("Done creating agent!");
+		}
+		
+		if (!dataCollection) {
+			// If we're in doing stuff mode then we want to test what we've learned
+			agent.freezeLearning();
+		}
+		
+		ref = new OnePlayerReferee(agent);
 	}
 
 	private static void driveForward(int power) {
@@ -242,13 +288,21 @@ public class Control extends JFrame {
 		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
 	}
 
-	private static void move(MovementType movetype) {
+	private static void move(MovementType movetype, MovementType powerSetting) {
+		int power = MovementType.getPower(powerSetting);
+		
 		switch (movetype) {
 		case ForwardVerySlow:
 		case ForwardSlow:
 		case ForwardFast:
 		case ForwardVeryFast:
-			driveForward(mode == Mode.Part3 ? 20 : MovementType.getPower(movetype));
+			driveForward(power);
+			break;
+		case TurnLeft:
+			turnLeft(power);
+			break;
+		case TurnRight:
+			turnRight(power);
 			break;
 		default:
 			stahp();
@@ -287,6 +341,10 @@ public class Control extends JFrame {
 			}
 
 			results.clear();
+		}
+		
+		if (agent != null) {
+			agent.saveAgent(agentFile);
 		}
 	}
 
@@ -353,7 +411,7 @@ public class Control extends JFrame {
 				}
 				break;
 			case '4':
-				if (mode != Mode.Part4) {
+				if (mode != Mode.Part4 && resetWeka()) {
 					resetRL();
 					mode = Mode.Part4;
 				}
@@ -390,6 +448,13 @@ public class Control extends JFrame {
 			case 'q':
 				mode = Mode.Stop;
 				disableSensors();
+				break;
+				
+			case 't':
+				//System.out.println(rightUltrasound.getMode());
+				//System.out.println(frontUltrasound.getDistance());
+				//System.out.println(backUltrasound.getDistance());
+				System.out.println(lightSensor.getLightValue());
 				break;
 			}
 		}

@@ -1,3 +1,5 @@
+package JockeyControl;
+
 import lejos.nxt.*;
 /**
  * Supports Mindsensors DIST-Nx series of Optical Distance Sensor.<br>

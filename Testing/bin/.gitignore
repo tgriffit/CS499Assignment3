@@ -1,4 +1,7 @@
+/Examples
 /ReinforcementLearning
+/acrobot
+/agents
 /algorithms
 /dataset
 /environment
@@ -8,6 +11,7 @@
 /maabac
 /maabacVersion2
 /mazes
+/util
 /memory
 /missionaries
 /mobileRobot
@@ -18,6 +22,4 @@
 /statistics
 /tictactoe
 /tiling
-/util
-/acrobot
-/agents
+/JockeyControl

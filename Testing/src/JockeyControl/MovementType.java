@@ -1,3 +1,5 @@
+package JockeyControl;
+
 
 public enum MovementType {
 	Stop, ForwardVerySlow, ForwardSlow, ForwardFast, ForwardVeryFast, Backward, TurnRight, TurnLeft;
@@ -44,6 +46,6 @@ public enum MovementType {
 			return 40;
 		}
 		
-		return 0;
+		return 20;
 	}
 }
