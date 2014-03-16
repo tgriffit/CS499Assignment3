@@ -42,7 +42,7 @@ public class WekaHandler {
 		}
 		
 		try {
-			som = (SelfOrganizingMap) SerializationHelper.read(new FileInputStream("SoM-quantized.model"));
+			som = (SelfOrganizingMap) SerializationHelper.read(new FileInputStream("SoMdoubledata.model"));
 		} catch (FileNotFoundException e) {
 			System.out.println("Could not find model file to load");
 		} catch (Exception e) {
