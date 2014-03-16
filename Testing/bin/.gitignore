@@ -1,6 +1,4 @@
-/Examples
-/acrobot
-/agents
+/ReinforcementLearning
 /algorithms
 /dataset
 /environment
@@ -21,4 +19,5 @@
 /tictactoe
 /tiling
 /util
-/ReinforcementLearning
+/acrobot
+/agents
