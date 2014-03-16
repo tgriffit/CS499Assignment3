@@ -19,6 +19,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import agents.LoneAgent;
+import ReinforcementLearning.*;
 import lejos.nxt.*;
 import lejos.pc.comm.NXTConnector;
 import lejos.util.Delay;
@@ -48,6 +50,10 @@ class Result1 extends Result {
 public class Control extends JFrame {
 
 	private static WekaHandler weka;
+	
+	// Reinforcement learning components
+	private static Environment environment;
+	private static LoneAgent agent;
 
 	private enum Mode {
 		Stop, Wait, Part1EM, Part1KM, Part2, Part3, Part4
@@ -131,10 +137,9 @@ public class Control extends JFrame {
 				// doWekaPart2();
 				break;
 			case Part3:
-				// doWekaPart3();
-				break;
 			case Part4:
-				// doWekaPart4();
+				doReinforcementLearning();
+				break;
 			default:
 				stahp();
 				break;
@@ -167,27 +172,9 @@ public class Control extends JFrame {
 		move(MovementType.intToMovementType(result));
 	}
 
-	// private static void doWekaPart2() {
-	// MovementType result = weka.getPart2Classification(
-	// lightSensor.getLightValue(), ultrasoundSensor.getDistance());
-	// move(result);
-	// }
-
-	// private static void doWekaPart3() {
-	// MovementType result;
-	//
-	// if (lineFollowMode) {
-	// result = weka.getPart3ClassificationNoUltrasound(
-	// lightSensor.getLightValue(), rightIR.getDistance(),
-	// leftIR.getDistance());
-	// } else {
-	// result = weka.getPart3Classification(lightSensor.getLightValue(),
-	// ultrasoundSensor.getDistance(), rightIR.getDistance(),
-	// leftIR.getDistance());
-	// }
-	//
-	// move(result);
-	// }
+	private static void doReinforcementLearning() {
+		
+	}
 
 	private static void writeArffFile(ArrayList<Result> results) {
 		String filename = "output - " + System.currentTimeMillis() + ".arff";
@@ -235,6 +222,10 @@ public class Control extends JFrame {
 
 		return true;
 	}
+	
+	private static void resetRL() {
+		
+	}
 
 	private static void driveForward(int power) {
 		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
@@ -257,7 +248,7 @@ public class Control extends JFrame {
 		case ForwardSlow:
 		case ForwardFast:
 		case ForwardVeryFast:
-			driveForward(MovementType.getPower(movetype));
+			driveForward(mode == Mode.Part3 ? 20 : MovementType.getPower(movetype));
 			break;
 		default:
 			stahp();
@@ -354,28 +345,20 @@ public class Control extends JFrame {
 					}
 				}
 				break;
-			// Part 2 is handled in a separate project
-//			case '2':
-//				if (resetWeka()) {
-//					enableSensors();
-//					// lineFollowMode = false;
-//					mode = Mode.Part2;
-//				}
-//				break;
+				
 			case '3':
-				if (resetWeka()) {
-					enableSensors();
-					// lineFollowMode = true;
+				if (mode != Mode.Part3) {
+					resetRL();
 					mode = Mode.Part3;
 				}
 				break;
 			case '4':
-				if (resetWeka()) {
-					enableSensors();
-					// lineFollowMode = false;
-					mode = Mode.Part3;
+				if (mode != Mode.Part4) {
+					resetRL();
+					mode = Mode.Part4;
 				}
 				break;
+				
 
 			// Movement Modes!
 			case 'u':

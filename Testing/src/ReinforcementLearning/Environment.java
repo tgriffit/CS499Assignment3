@@ -7,14 +7,20 @@ import environment.IState;
 
 public class Environment extends AbstractEnvironmentSingle {
 	
+	// The sensors we have access to
+	
 	// The distance from the wall to the middle of the track
 	private int middleDist = 50;
 	private int tolerance = 2;
 
 	@Override
 	public ActionList getActionList(IState s) {
-		// TODO Auto-generated method stub
-		return null;
+		ActionList list = new ActionList(s);
+		list.add(new JockeyAction(Action.Forward));
+		list.add(new JockeyAction(Action.Left));
+		list.add(new JockeyAction(Action.Right));
+		
+		return list;
 	}
 
 	@Override
@@ -31,7 +37,19 @@ public class Environment extends AbstractEnvironmentSingle {
 
 	@Override
 	public double getReward(IState s1, IState s2, IAction a) {
-		// TODO Auto-generated method stub
+		JockeyState initial = (JockeyState)s1;
+		JockeyState result = (JockeyState)s2;
+		
+		if (initial.orientation == Orientation.Proper && initial.distance == Distance.Proper
+				&& result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
+			// Our greatest reward should be for maintaining the right course
+			return 20;
+		}
+		else if (result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
+			return 10;
+		}
+		else if (result.orientation == )
+		
 		return 0;
 	}
 
@@ -49,7 +67,7 @@ public class Environment extends AbstractEnvironmentSingle {
 	
 	public Orientation distsToOrientation(int front, int back) {
 		if (distsEqual(front, back)) {
-			return Orientation.Straight;
+			return Orientation.Proper;
 		}
 		else if (front > back) {
 			return Orientation.AngledRight;

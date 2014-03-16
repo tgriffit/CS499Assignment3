@@ -6,6 +6,11 @@ public class JockeyAction implements IAction {
 
 	public Action action;
 	
+	// The resultant distances of the action, needed to calculate the new state
+	public int frontResult;
+	public int backResult;
+	public int gyroscope;
+	
 	public JockeyAction() {
 		action = Action.Forward;
 	}
@@ -30,5 +35,10 @@ public class JockeyAction implements IAction {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	public void addResults(int front, int back, int gyro) {
+		frontResult = front;
+		backResult = back;
+		gyroscope = gyro;
+	}
 }
