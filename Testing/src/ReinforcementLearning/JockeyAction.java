@@ -37,4 +37,19 @@ public class JockeyAction implements IAction {
 		frontResult = front;
 		backResult = back;
 	}
+	
+	@Override
+	public int hashCode() {
+		return Action.toInt(action);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof JockeyAction) {
+			JockeyAction ja = (JockeyAction)o;
+			return ja.action == action;
+		}
+		
+		return false;
+	}
 }

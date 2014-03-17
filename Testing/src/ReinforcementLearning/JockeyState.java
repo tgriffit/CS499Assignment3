@@ -40,4 +40,18 @@ public class JockeyState extends AbstractState {
 		return null;
 	}
 
+	@Override
+	public int hashCode() {
+		return Orientation.toInt(orientation) + Distance.toInt(distance);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof JockeyState) {
+			JockeyState js = (JockeyState)o;
+			return js.orientation == orientation && js.distance == distance;
+		}
+		
+		return false;
+	}
 }

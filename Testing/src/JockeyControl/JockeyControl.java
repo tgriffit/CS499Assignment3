@@ -55,7 +55,7 @@ public class JockeyControl extends JFrame {
 	private static LoneAgent agent;
 	private static WatkinsSelector sel;
 	private static OnePlayerReferee ref;
-	private static double epsilon;
+	private static double epsilon = 0.30;
 	static final String agentFile = "AgentResults";
 
 	private enum Mode {
@@ -114,28 +114,26 @@ public class JockeyControl extends JFrame {
 		NXTrc.requestFocusInWindow();
 		NXTrc.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		disableSensors();
-
 		while (mode != Mode.Stop) {
 			switch (mode) {
 			case Part1EM:
 				if (dataCollection) {
 					recordDataPart1();
-					move(movementMode, movementMode);
+					move(movementMode, MovementType.getPower(movementMode));
 				} else {
 					int result = doWekaPart1EM();
 					MovementType r = MovementType.intToMovementType(result);
-					move(r, r);
+					move(r, MovementType.getPower(r));
 				}
 				break;
 			case Part1KM:
 				if (dataCollection) {
 					recordDataPart1();
-					move(movementMode, movementMode);
+					move(movementMode, MovementType.getPower(movementMode));
 				} else {
 					int result = doWekaPart1KMeans();
 					MovementType r = MovementType.intToMovementType(result);
-					move(r, r);
+					move(r, MovementType.getPower(r));
 				}
 				break;
 			case Part3:
@@ -166,6 +164,7 @@ public class JockeyControl extends JFrame {
 	}
 
 	private static int doWekaPart1EM() {
+		System.out.println(rightUltrasound.getDistance());
 		return weka.getEMCluster(rightUltrasound.getDistance());
 	}
 	
@@ -178,23 +177,100 @@ public class JockeyControl extends JFrame {
 		
 		ref.episode(environment.getCurrentState());
 		
-		System.out.println("Reward: " + ref.getRewardForEpisode());
+		System.out.println("Episode Reward: " + ref.getRewardForEpisode());
 		epsilon *= 0.99;
 		sel.setEpsilon(epsilon);
 	}
 	
-	public static void takeAction(Action action) {
-		MovementType direction = MovementType.ForwardSlow;
+	// Tries to go straight left
+	public static void squiggleLeft() {
+		int power = 20;
+		int delay = 250;
+		move(MovementType.TurnLeft, power);
+		Delay.msDelay(delay);
+		move(MovementType.ForwardSlow, power);
+		Delay.msDelay(delay);
+		move(MovementType.TurnRight, power);
+		Delay.msDelay(delay);
+		move(MovementType.Backward, power/2);
+		Delay.msDelay(delay);
+
+		stahp();
+		Delay.msDelay(500);
+	}
+	
+	// Tries to go straight right
+	public static void squiggleRight() {
+		int power = 20;
+		int delay = 250;
+		move(MovementType.TurnRight, power);
+		Delay.msDelay(delay);
+		move(MovementType.ForwardSlow, power);
+		Delay.msDelay(delay);
+		move(MovementType.TurnLeft, power);
+		Delay.msDelay(delay);
+		move(MovementType.Backward, power/2);
+		Delay.msDelay(delay);
 		
-		if (action == Action.Right) {
-			direction = MovementType.TurnRight;
-		}
-		else if (action == Action.Left) {
-			direction = MovementType.TurnLeft;
-		}
+		stahp();
+		Delay.msDelay(500);
+	}
+	
+	public static void turnLeft() {
+		int power = 20;
+		int delay = 20;
+		move(MovementType.TurnLeft, power);
+		Delay.msDelay(delay);
+
+		stahp();
+		Delay.msDelay(100);
+	}
+	
+	public static void turnRight() {
+		int power = 20;
+		int delay = 20;
+		move(MovementType.TurnRight, power);
+		Delay.msDelay(delay);
+
+		stahp();
+		Delay.msDelay(100);
+	}
+	
+	public static void go() {
+		int power = mode == Mode.Part4 ? MovementType.getPower(MovementType.intToMovementType(doWekaPart1EM())) : 30;
+		int delay = 250;
+		move(MovementType.ForwardSlow, power);
+		Delay.msDelay(delay);
+		stahp();
+	}
+	
+	public static void straighten() {
+		int front = getFrontDistance();
+		int back = getBackDistance();
 		
-		MovementType power = mode == Mode.Part4 ? MovementType.intToMovementType(doWekaPart1EM()) : direction;
-		move(direction, power);
+		while (Math.abs(front - back) > 2) {
+			if (front > back) {
+				turnLeft();
+			}
+			else {
+				turnRight();
+			}
+			
+			front = getFrontDistance();
+			back = getBackDistance();
+		}
+	}
+	
+	public static int getFrontDistance() {
+		return frontUltrasound.getDistance();
+	}
+	
+	public static int getBackDistance() {
+		return backUltrasound.getDistance();
+	}
+	
+	public static int getLightValue() {
+		return lightSensor.getLightValue();
 	}
 
 	private static void writeArffFile(ArrayList<Result> results) {
@@ -240,11 +316,12 @@ public class JockeyControl extends JFrame {
 		return true;
 	}
 	
-	private static void resetRL() {
-		System.out.println(frontUltrasound.getDistance());
-		System.out.println(backUltrasound.getDistance());
-		System.out.println(lightSensor.getLightValue());
-		environment = new Environment(frontUltrasound, backUltrasound, lightSensor);
+	private static void setupRL() {
+		if (agent != null) {
+			return;
+		}
+		
+		environment = new Environment();
 		
 		File file = new File(agentFile + ".agt");
 		if (file.exists()) {
@@ -255,19 +332,19 @@ public class JockeyControl extends JFrame {
 			System.out.println("Creating a new agent.");
 			
 			sel = new WatkinsSelector(0.7);
-			epsilon=0.5; 
-			sel.setEpsilon(epsilon); 
+			
+			sel.setEpsilon(epsilon);
 			sel.setGeometricAlphaDecay(); 
 			sel.setAlpha(0.3); 
 			
 			agent = new LoneAgent(environment, sel);
-			
-			System.out.println("Done creating agent!");
 		}
 		
 		if (!dataCollection) {
 			// If we're in doing stuff mode then we want to test what we've learned
 			agent.freezeLearning();
+			epsilon = 0;
+			sel.setEpsilon(epsilon);
 		}
 		
 		ref = new OnePlayerReferee(agent);
@@ -276,6 +353,11 @@ public class JockeyControl extends JFrame {
 	private static void driveForward(int power) {
 		leftMotor.controlMotor(power, BasicMotorPort.FORWARD);
 		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
+	}
+	
+	private static void driveBackward(int power) {
+		leftMotor.controlMotor(power, BasicMotorPort.BACKWARD);
+		rightMotor.controlMotor(power, BasicMotorPort.BACKWARD);
 	}
 	
 	private static void turnRight(int power) {
@@ -288,9 +370,7 @@ public class JockeyControl extends JFrame {
 		rightMotor.controlMotor(power, BasicMotorPort.FORWARD);
 	}
 
-	private static void move(MovementType movetype, MovementType powerSetting) {
-		int power = MovementType.getPower(powerSetting);
-		
+	private static void move(MovementType movetype, int power) {
 		switch (movetype) {
 		case ForwardVerySlow:
 		case ForwardSlow:
@@ -304,25 +384,13 @@ public class JockeyControl extends JFrame {
 		case TurnRight:
 			turnRight(power);
 			break;
+		case Backward:
+			driveBackward(power);
+			break;
 		default:
 			stahp();
 			break;
 		}
-	}
-
-	// Saves power
-	private static void disableSensors() {
-		// sensorsOn = false;
-		// ultrasoundSensor.setMode(UltrasonicSensor.MODE_OFF);
-		// rightIR.powerOff();
-		// leftIR.powerOff();
-	}
-
-	private static void enableSensors() {
-		// sensorsOn = true;
-		// ultrasoundSensor.setMode(UltrasonicSensor.MODE_CONTINUOUS);
-		// rightIR.powerOn();
-		// leftIR.powerOn();
 	}
 
 	private static void toggleCollection() {
@@ -386,7 +454,6 @@ public class JockeyControl extends JFrame {
 					if (dataCollection) {
 						mode = Mode.Part1EM;
 					} else if (resetWeka()) {
-						enableSensors();
 						mode = Mode.Part1EM;
 					}
 				}
@@ -398,7 +465,6 @@ public class JockeyControl extends JFrame {
 					if (dataCollection) {
 						mode = Mode.Part1KM;
 					} else if (resetWeka()) {
-						enableSensors();
 						mode = Mode.Part1KM;
 					}
 				}
@@ -406,13 +472,13 @@ public class JockeyControl extends JFrame {
 				
 			case '3':
 				if (mode != Mode.Part3) {
-					resetRL();
+					setupRL();
 					mode = Mode.Part3;
 				}
 				break;
 			case '4':
 				if (mode != Mode.Part4 && resetWeka()) {
-					resetRL();
+					setupRL();
 					mode = Mode.Part4;
 				}
 				break;
@@ -442,20 +508,18 @@ public class JockeyControl extends JFrame {
 
 			case 's':
 				mode = Mode.Wait;
-				disableSensors();
 				break;
 
 			case 'q':
 				mode = Mode.Stop;
-				disableSensors();
 				break;
 				
-			case 't':
-				//System.out.println(rightUltrasound.getMode());
-				//System.out.println(frontUltrasound.getDistance());
-				//System.out.println(backUltrasound.getDistance());
-				System.out.println(lightSensor.getLightValue());
-				break;
+//			case 'r':
+//				squiggleRight();
+//				break;
+//			case 'l':
+//				squiggleLeft();
+//				break;
 			}
 		}
 

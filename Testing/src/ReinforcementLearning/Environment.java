@@ -1,5 +1,7 @@
 package ReinforcementLearning;
 
+import java.util.Scanner;
+
 import JockeyControl.JockeyControl;
 import lejos.nxt.LightSensor;
 import lejos.nxt.UltrasonicSensor;
@@ -13,44 +15,53 @@ public class Environment extends AbstractEnvironmentSingle {
 	
 	private static final long serialVersionUID = -5473856690711387195L;
 	
-	// The sensors we have access to
-	private UltrasonicSensor frontSensor;
-	private UltrasonicSensor backSensor;
-	private LightSensor lightSensor;
-	
 	// The distance from the wall to the middle of the track
-	private int middleDist = 50;
+	private int middleDist = 44;
 	private int tolerance = 2;
-	
-	public Environment(UltrasonicSensor front, UltrasonicSensor back, LightSensor light) {
-		frontSensor = front;
-		backSensor = back;
-		lightSensor = light;
-	}
 
 	@Override
 	public ActionList getActionList(IState s) {
 		ActionList list = new ActionList(s);
 		list.add(new JockeyAction(Action.Forward));
+		list.add(new JockeyAction(Action.GoLeft));
+		list.add(new JockeyAction(Action.GoRight));
 		
-		JockeyState js = (JockeyState)s;
-		if (!(js.orientation == Orientation.Proper && js.distance == Distance.TooClose)) {
-			list.add(new JockeyAction(Action.Left));
-		}
-		
-		if (!(js.orientation == Orientation.Proper && js.distance == Distance.TooFar)) {
-			list.add(new JockeyAction(Action.Right));
-		}
+		// Proof of concept code
+//		JockeyState js = (JockeyState)s;
+//		if (js.orientation == Orientation.AngledLeft) {
+//			list.add(new JockeyAction(Action.TurnRight));
+//		}
+//		else if (js.orientation == Orientation.AngledRight) {
+//			list.add(new JockeyAction(Action.TurnLeft));
+//		}
+//		else if (js.distance == Distance.TooClose) {
+//			list.add(new JockeyAction(Action.GoRight));
+//		}
+//		else if (js.distance == Distance.TooFar) {
+//			list.add(new JockeyAction(Action.GoLeft));
+//		}
+//		else {
+//			list.add(new JockeyAction(Action.Forward));
+//		}
 		
 		return list;
 	}
 
 	@Override
 	public IState successorState(IState s, IAction a) {
-		JockeyControl.takeAction(((JockeyAction)a).action);
+		JockeyAction ja = (JockeyAction)a;
 		
-		// Give the action a chance to change the state
-		Delay.msDelay(10);
+		if (ja.action == Action.GoLeft) {
+			JockeyControl.squiggleLeft();
+		}
+		else if (ja.action == Action.GoRight) {
+			JockeyControl.squiggleRight();
+		}
+		else if (ja.action == Action.Forward) {
+			JockeyControl.go();
+		}
+		
+		JockeyControl.straighten();
 		
 		return getCurrentState();
 	}
@@ -64,20 +75,37 @@ public class Environment extends AbstractEnvironmentSingle {
 	public double getReward(IState s1, IState s2, IAction a) {
 		JockeyState initial = (JockeyState)s1;
 		JockeyState result = (JockeyState)s2;
+		JockeyAction ja = (JockeyAction)a;
+		int reward = 0;
+		
+		if (result.onTape) {
+			System.out.print("Custom reward value: ");
+			Scanner sc = new Scanner(System.in);
+			int input = sc.nextInt();
+			reward += input;
+		}
+		
 		
 		if (initial.orientation == Orientation.Proper && initial.distance == Distance.Proper
 				&& result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
 			// Our greatest reward should be for maintaining the right course
-			return 20;
+			return ja.action == Action.Forward ? 50 : 20;
 		}
 		else if (result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
 			return 10;
 		}
 		else if (result.orientation == Orientation.Proper) {
-			return -5;
+			reward -= 5;
 		}
 		
-		return -10;
+//		if (initial.distance == Distance.TooClose && ja.action == Action.GoLeft
+//				|| initial.distance == Distance.TooFar && ja.action == Action.GoRight) {
+//			reward -= 100;
+//		}
+		
+		reward -= 10;
+		
+		return reward;
 	}
 
 	@Override
@@ -99,22 +127,20 @@ public class Environment extends AbstractEnvironmentSingle {
 	}
 	
 	public IState getCurrentState() {
-		System.out.println("Starting");
 		JockeyState js = new JockeyState(this);
-		System.out.println("Constructed");
-//		js.orientation = distsToOrientation(frontSensor.getDistance(), backSensor.getDistance());
-		js.orientation = distsToOrientation(0, 0);
-		System.out.println("Orientation");
-		js.distance = distsToDistance(frontSensor.getDistance(), backSensor.getDistance());
-		System.out.println("Distance");
-		js.onTape = lightSensor.getLightValue() < 35; // Super approximate, but only used to tell us when an episode is over
 		
-		System.out.println("Returning state");
+		int front = JockeyControl.getFrontDistance();
+		int back = JockeyControl.getBackDistance();
+		int light = JockeyControl.getLightValue();
+		
+		js.orientation = distsToOrientation(front, back);
+		js.distance = distsToDistance(front, back);
+		js.onTape = light > 30; // Super approximate, but only used to tell us when an episode is over
+		
 		return js;
 	}
 	
 	public Orientation distsToOrientation(int front, int back) {
-		System.out.println("WHY");
 		if (distsEqual(front, back)) {
 			return Orientation.Proper;
 		}

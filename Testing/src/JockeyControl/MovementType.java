@@ -46,6 +46,6 @@ public enum MovementType {
 			return 40;
 		}
 		
-		return 20;
+		return 30;
 	}
 }
