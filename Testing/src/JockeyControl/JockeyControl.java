@@ -513,13 +513,6 @@ public class JockeyControl extends JFrame {
 			case 'q':
 				mode = Mode.Stop;
 				break;
-				
-//			case 'r':
-//				squiggleRight();
-//				break;
-//			case 'l':
-//				squiggleLeft();
-//				break;
 			}
 		}
 
