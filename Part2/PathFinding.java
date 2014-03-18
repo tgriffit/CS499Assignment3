@@ -110,7 +110,7 @@ public class PathFinding {
 		return path;
 	}
 
-	private double distBetween(double x1, double y1, double x2, double y2) {
+	public static double distBetween(double x1, double y1, double x2, double y2) {
 		double dx = (int)x2 - (int)x1;
 		double dy = (int)y2 - (int)y1;
 

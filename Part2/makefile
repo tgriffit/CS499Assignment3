@@ -1,15 +1,15 @@
 CLASSPATH=json-simple-1.1.1.jar:.
 #asg.cliche-020310.jar:Jama-1.0.3.jar:
-all: TrackerReader.class Part2PC.class
+all: TrackerReader.class Demo.class
 #
 TrackerReader.class: TrackerReader.java
 	javac -cp $(CLASSPATH) TrackerReader.java
 
-Part2PC.class: Part2PC.java
-	nxjpcc -cp $(CLASSPATH) Part2PC.java
+Demo.class: Demo.java
+	nxjpcc -cp $(CLASSPATH) Demo.java
 
 part2:all
-	nxjpc -cp $(CLASSPATH) Part2PC
+	nxjpc -cp $(CLASSPATH) Demo
 
 clean: 
 	$(RM) *.class

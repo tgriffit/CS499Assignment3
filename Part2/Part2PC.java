@@ -26,7 +26,10 @@
 import java.io.*;
 import java.util.ArrayList;
 
+import lejos.robotics.localization.OdometryPoseProvider;
 import lejos.robotics.navigation.DifferentialPilot;
+import lejos.robotics.navigation.Navigator;
+import lejos.robotics.navigation.Pose;
 import lejos.nxt.*;
 import lejos.pc.comm.NXTConnector;
 import lejos.util.Delay;
@@ -67,19 +70,20 @@ public class Part2PC {
 	public Part2PC() {
 		pointVals = new ArrayList<PointValue>();
 		ui = new UIHandler(this);
-		//pilot = new DifferentialPilot(5.5f, 5.5f, Motor.A, Motor.C);
-		//tracker = new TrackerReader();
-		//light = new LightSensor(SensorPort.S2, true);
-		//pilot.setTravelSpeed(2);
-		//tracker.start();
+		pilot = new DifferentialPilot(56, 116, Motor.C, Motor.A);
+		tracker = new TrackerReader();
+		light = new LightSensor(SensorPort.S2, true);
+		pilot.setTravelSpeed(2);
+		pilot.setRotateSpeed(pilot.getRotateMaxSpeed());
+		tracker.start();
 
 		System.out
 				.println("Please run 'python tracker.py' and select the colour");
 
 		// wait until the tracker has made a connection to the project
-		//while (!tracker.hasConnection)
-			//Delay.msDelay(500);
-		
+		while (!tracker.hasConnection)
+			Delay.msDelay(500);
+
 		while (true) {
 			mode = ui.getMode();
 			switch (mode) {
@@ -87,7 +91,19 @@ public class Part2PC {
 				recordDataPoint();
 				break;
 			case Pause:
-				// do nothing, because paused!
+				// pilot.travel(1) should give 10 pixel distance!
+				if (tracker.x == 0.0)
+					continue;
+				/*
+				 * double xbef = tracker.x; double ybef = tracker.y;
+				 * pilot.travel(1); double xaft = tracker.x; double yaft =
+				 * tracker.y; double angle = angleBetween2Lines(new Point(500,
+				 * 500, 100), new Point(400, 400, 100), new Point(300, 300,
+				 * 100)); pilot.rotate(angle); System.out.println("angle: " +
+				 * angle); System.out.println(PathFinding.distBetween(xbef,
+				 * ybef, xaft, yaft));
+				 */
+
 				break;
 			case Test:
 				if (weka == null) {
@@ -102,14 +118,13 @@ public class Part2PC {
 					arfffile = ui.getArffname();
 					weka = new WekaHandler(arfffile);
 				}
-				// get matrix of light vals from "weka" 
-				// top: 125, 80
-				// bot: 500, 345
 				Point topleft = new Point(125, 80, 100);
 				Point topright = new Point(500, 345, 100);
-				Point start = new Point(450, 300, 100);	// arbitrary light vals
+				Point start = new Point(450, 300, 100);
 				Point end = new Point(140, 190, 100);
-				ArrayList<Cluster> clusters = weka.getClusters(125, 80, 500, 345);
+				// arbitrary light vals 
+				ArrayList<Cluster> clusters = weka.getClusters(125, 80, 500,
+						345);
 				PathFinding p = new PathFinding(clusters);
 				ArrayList<Point> path = p.findPath(start, end);
 				ui.drawPath(path, topleft, topright);
@@ -133,8 +148,8 @@ public class Part2PC {
 		System.out.println("x: " + x + " y: " + y + " theta: " + theta);
 		System.out.println("trackerx: " + targetx + " trackery: " + targety);
 		System.out.println("light: " + l);
-		//int cluster = weka.getClusterNum(x, y);
-		//System.out.println("Cluster num: " + cluster);
+		// int cluster = weka.getClusterNum(x, y);
+		// System.out.println("Cluster num: " + cluster);
 	}
 
 	public void recordDataPoint() {
