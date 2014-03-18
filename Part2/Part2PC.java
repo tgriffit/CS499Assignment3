@@ -81,8 +81,8 @@ public class Part2PC {
 				.println("Please run 'python tracker.py' and select the colour");
 
 		// wait until the tracker has made a connection to the project
-		while (!tracker.hasConnection)
-			Delay.msDelay(500);
+		// while (!tracker.hasConnection)
+		// Delay.msDelay(500);
 
 		while (true) {
 			mode = ui.getMode();
@@ -91,18 +91,6 @@ public class Part2PC {
 				recordDataPoint();
 				break;
 			case Pause:
-				// pilot.travel(1) should give 10 pixel distance!
-				if (tracker.x == 0.0)
-					continue;
-				/*
-				 * double xbef = tracker.x; double ybef = tracker.y;
-				 * pilot.travel(1); double xaft = tracker.x; double yaft =
-				 * tracker.y; double angle = angleBetween2Lines(new Point(500,
-				 * 500, 100), new Point(400, 400, 100), new Point(300, 300,
-				 * 100)); pilot.rotate(angle); System.out.println("angle: " +
-				 * angle); System.out.println(PathFinding.distBetween(xbef,
-				 * ybef, xaft, yaft));
-				 */
 
 				break;
 			case Test:
@@ -122,12 +110,12 @@ public class Part2PC {
 				Point topright = new Point(500, 345, 100);
 				Point start = new Point(450, 300, 100);
 				Point end = new Point(140, 190, 100);
-				// arbitrary light vals 
+				// arbitrary light vals
 				ArrayList<Cluster> clusters = weka.getClusters(125, 80, 500,
 						345);
 				PathFinding p = new PathFinding(clusters);
 				ArrayList<Point> path = p.findPath(start, end);
-				ui.drawPath(path, topleft, topright);
+				ui.drawPath(path, clusters, topleft, topright);
 				System.out.println(path);
 				ui.mode = UIHandler.Mode.Pause;
 				break;

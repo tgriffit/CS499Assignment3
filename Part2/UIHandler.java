@@ -93,8 +93,8 @@ public class UIHandler {
 		modeDisplay.setText("Current Mode: [" + mode.toString() + "]");
 	}
 
-	public void drawPath(ArrayList<Point> path, Point topleft, Point topright) {
-		imageFrame = new PathFrame(path);
+	public void drawPath(ArrayList<Point> path, ArrayList<Cluster> clusters, Point topleft, Point topright) {
+		imageFrame = new PathFrame(path, clusters);
 	}
 	
 	public Mode getMode() {

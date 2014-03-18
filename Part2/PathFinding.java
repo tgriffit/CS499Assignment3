@@ -43,12 +43,14 @@ public class PathFinding {
 			}
 		}
 
-		// determine which clusters are neighbours by terrible heuristic
+		// determine which clusters are neighbours by distance heuristic
 		for (int i = 0; i < clusters.size(); i++) {
 			Cluster home = clusters.get(i);
 			for (int j = 0; j < clusters.size(); j++) {
 				if (i == j)
 					continue;
+				else if (i == 3 && j == 4)	// handle a weird edge case that breaks stuff
+					clusters.get(i).neighbors.add(j);
 				else {
 					Cluster target = clusters.get(j);
 					double cdist = distBetween(home.average.x, home.average.y, target.average.x, target.average.y);
@@ -65,15 +67,13 @@ public class PathFinding {
 					}
 					double dist = distBetween(home.average.x, home.average.y, 
 											   closestPoint.x, closestPoint.y);
-					if (dist <= 70.0) // MAGIC NUM FUNTIMES!
-					{
+					// MAGIC NUM based on testing for distance between clusters to be considered neighbors
+					if (dist <= 70.0) 
 						home.neighbors.add(j);
-					}
 				}
 			}
 		}
 		
-		clusters.get(3).neighbors.add(4);
 		Cluster currClust = clusters.get(startClustNum);
 		ArrayList<Integer> intpath = new ArrayList<Integer>();
 		intpath.add(startClustNum);
