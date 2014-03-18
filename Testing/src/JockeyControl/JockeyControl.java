@@ -97,10 +97,17 @@ public class JockeyControl extends JFrame {
 		setCollectionHeader();
 		p.add(modeLbl);
 
-		String cmds = "<html>Buttons:<br>" + "1: Part 1<br>" + "2: Part 2<br>"
-				+ "3: Part 3<br>" + "<br>"
-				+ "c: Record Data/Stop Recording Data<br>" + "<br>"
-				+ "s: Stop<br>" + "<br>" + "q: Quit</html>";
+		String cmds = "<html>Buttons:<br>" 
+				+ "1: Part 1 (EM)<br>" 
+				+ "2: Part 1 (K-Means)<br>"
+				+ "3: Part 3<br>" 
+				+ "4: Part 4<br>"
+				+ "<br>"
+				+ "c: Record Data/Stop Recording Data<br>" 
+				+ "<br>"
+				+ "s: Stop<br>" 
+				+ "<br>" 
+				+ "q: Quit</html>";
 
 		commands = new JLabel(cmds);
 		p.add(commands);
@@ -154,7 +161,10 @@ public class JockeyControl extends JFrame {
 	}
 
 	private static void recordDataPart1() {
-		MovementType m = movementMode;	// Cache it to avoid having movement mode change during data collection
+		// Cache it to avoid having movement mode change during data collection.
+		// I had a problem. I tried to solve it with threading. Now I two problems have.
+		MovementType m = movementMode;	
+		
 		if (m != MovementType.Stop) {
 			Result1 r = new Result1();
 			r.pedDist = rightUltrasound.getDistance();
@@ -181,6 +191,10 @@ public class JockeyControl extends JFrame {
 		sel.setEpsilon(epsilon);
 	}
 	
+	////////////
+	// These functions are needed by our reinforcement learning code
+	////////////
+	
 	// Tries to go straight left
 	public static void squiggleLeft() {
 		int power = 20;
@@ -189,8 +203,6 @@ public class JockeyControl extends JFrame {
 		Delay.msDelay(delay);
 		move(MovementType.ForwardSlow, power);
 		Delay.msDelay(delay);
-//		move(MovementType.TurnRight, power);
-//		Delay.msDelay(delay);
 		stahp();
 		Delay.msDelay(10);
 		straighten();
@@ -209,8 +221,6 @@ public class JockeyControl extends JFrame {
 		Delay.msDelay(delay);
 		move(MovementType.ForwardSlow, power);
 		Delay.msDelay(delay);
-		//move(MovementType.TurnLeft, power);
-		//Delay.msDelay(delay);
 		stahp();
 		Delay.msDelay(10);
 		straighten();
@@ -242,6 +252,10 @@ public class JockeyControl extends JFrame {
 	}
 	
 	public static void go() {
+		// In part 4, instead of using a set power when going forward we should use
+		// an EM cluster to give us a movement speed. We then multiply it by 2 since
+		// our motion here is quite jerky, and without the times 2 the states tended
+		// to look too similar.
 		int power = mode == Mode.Part4 ? MovementType.getPower(MovementType.intToMovementType(doWekaPart1EM()))*2 : 30;
 		int delay = 250;
 		move(MovementType.ForwardSlow, power);
@@ -277,6 +291,10 @@ public class JockeyControl extends JFrame {
 	public static int getLightValue() {
 		return lightSensor.getLightValue();
 	}
+	
+	////////////
+	// End of reinforcement learning functions
+	////////////
 
 	private static void writeArffFile(ArrayList<Result> results) {
 		String filename = "output - " + System.currentTimeMillis() + ".arff";
