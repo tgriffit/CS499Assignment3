@@ -55,10 +55,8 @@ public class LoneAgent extends AbstractAgent{
     public LoneAgent(IEnvironmentSingle s, ISelector al){ 
     super(s,al);
     // For the multi-agent case (ICML Octopus)
-    System.out.println("called super");
     if(s!=null)
     	this.currentState=s.defaultInitialState();  
-    System.out.println("done in cons");
     }
 
     /** Read an agent's description from a file. */

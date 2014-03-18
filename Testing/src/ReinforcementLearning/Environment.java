@@ -22,29 +22,11 @@ public class Environment extends AbstractEnvironmentSingle {
 	@Override
 	public ActionList getActionList(IState s) {
 		ActionList list = new ActionList(s);
+		
 		list.add(new JockeyAction(Action.Forward));
 		list.add(new JockeyAction(Action.GoLeft));
 		list.add(new JockeyAction(Action.GoRight));
-
-		//return getBadActionList(s);
 		
-		return list;
-	}
-
-	// Only gives a list of the correct action for each state
-	public ActionList getBadActionList(IState s) {
-		ActionList list = new ActionList(s);
-		
-		JockeyState js = (JockeyState) s;
-		if (!(js.distance == Distance.TooClose)) {
-			list.add(new JockeyAction(Action.GoLeft));
-		} else if (!(js.distance == Distance.TooFar)) {
-			list.add(new JockeyAction(Action.GoRight));
-		} else {
-			list.add(new JockeyAction(Action.Forward));
-//			list.add(new JockeyAction(Action.GoLeft));
-//			list.add(new JockeyAction(Action.GoRight));
-		}
 		return list;
 	}
 
@@ -60,6 +42,9 @@ public class Environment extends AbstractEnvironmentSingle {
 			JockeyControl.go();
 		}
 
+		// If our sensors aren't facing directly at the wall we have
+		// no accurate way of knowing where we are, so the state transition
+		// isn't complete until we straighten out
 		JockeyControl.straighten();
 
 		return getCurrentState();
@@ -78,39 +63,19 @@ public class Environment extends AbstractEnvironmentSingle {
 		
 		int reward = -10;
 
-		if (result.onTape) {
-			System.out.print("Custom reward value: ");
-			Scanner sc = new Scanner(System.in);
-			int input = sc.nextInt();
-			reward += input;
+		// This is true when Jockey ends up on one of the side lines
+		if (result.onTape && result.distance != Distance.Proper) {
+			// No, bad Jockey!
+			reward -= 5000;
 		}
-
-//		if (initial.orientation == Orientation.Proper && initial.distance == Distance.Proper
-//				&& result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
-//			// Our greatest reward should be for maintaining the right course
-//			return ja.action == Action.Forward ? 50 : 20;
-//		} else if (result.orientation == Orientation.Proper
-//				&& result.distance == Distance.Proper) {
-//			return 10;
-//		} else if (result.orientation == Orientation.Proper) {
-//			reward -= 5;
-//		}
-//
-//		if (initial.distance == Distance.TooClose && ja.action != Action.GoRight
-//				|| initial.distance == Distance.TooFar && ja.action != Action.GoLeft) {
-//			reward -= 10;
-//		}
 		
-		
-		
-		if (initial.distance == Distance.Proper) {
+		if (initial.distance == Distance.Proper && ja.action == Action.Forward) {
 			// Good job, Jockey!
-			if (ja.action == Action.Forward) {
 				reward += 50;
-			}
 		}
 		else {
-			reward -= getDistanceFromWall();
+			// Encourages Jockey to move towards the middle faster
+			reward -= getDistanceFromCenter();
 		}
 		
 		if (initial.distance == Distance.TooClose && ja.action != Action.GoRight
@@ -148,8 +113,7 @@ public class Environment extends AbstractEnvironmentSingle {
 
 		js.orientation = distsToOrientation(front, back);
 		js.distance = distsToDistance(front, back);
-		js.onTape = light > 30; // Super approximate, but only used to tell us
-								// when an episode is over
+		js.onTape = light > 30; // Magic number - the reading on the felt is ~25, the reading on tape is ~35
 
 		return js;
 	}
@@ -181,7 +145,7 @@ public class Environment extends AbstractEnvironmentSingle {
 		return Math.abs(a - b) <= tolerance;
 	}
 	
-	private double getDistanceFromWall() {
+	private double getDistanceFromCenter() {
 		int front = JockeyControl.getFrontDistance();
 		int back = JockeyControl.getBackDistance();
 		double average = (front + back) / 2.0;
