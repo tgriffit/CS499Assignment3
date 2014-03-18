@@ -91,14 +91,21 @@ public class WekaHandler {
 			ArrayList<Double> list = new ArrayList<Double>();
 
 			if (clusterer instanceof EM) {
+				System.out.println("EM");
+				
 				for (int i = 0; i < clusterer.numberOfClusters(); ++i) {
 					list.add(((EM)clusterer).getClusterModelsNumericAtts()[i][0][0]);
+					System.out.println(i + ": " + ((EM)clusterer).getClusterModelsNumericAtts()[i][0][0]);
 				}
 			}
 			else if (clusterer instanceof SimpleKMeans) {
+				System.out.println("KM");
 				Instances centroids = ((SimpleKMeans)clusterer).getClusterCentroids();
+				
 				for (int i = 0; i < centroids.numInstances(); ++i) {
 					list.add(centroids.instance(i).value(0));
+					
+					System.out.println(i + ": " + centroids.instance(i).value(0));
 				}
 			}
 			else {
@@ -115,6 +122,12 @@ public class WekaHandler {
 			for (int i = 0; i < ordered.size(); ++i) {
 				map.put(list.lastIndexOf(ordered.get(i)), i);
 			}
+			
+			for (int i = 0; i < map.size(); ++i) {
+				System.out.println(i + "->" + map.get(i));
+			}
+			
+			System.out.println();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

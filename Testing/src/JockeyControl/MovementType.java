@@ -35,6 +35,7 @@ public enum MovementType {
 	}
 	
 	public static int getPower(MovementType mode) {
+		//System.out.println(mode.toString());
 		switch (mode) {
 		case ForwardVerySlow:
 			return 10;
