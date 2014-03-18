@@ -67,19 +67,19 @@ public class Part2PC {
 	public Part2PC() {
 		pointVals = new ArrayList<PointValue>();
 		ui = new UIHandler(this);
-		pilot = new DifferentialPilot(5.5f, 5.5f, Motor.A, Motor.C);
-		tracker = new TrackerReader();
-		light = new LightSensor(SensorPort.S2, true);
-		pilot.setTravelSpeed(2);
-		tracker.start();
+		//pilot = new DifferentialPilot(5.5f, 5.5f, Motor.A, Motor.C);
+		//tracker = new TrackerReader();
+		//light = new LightSensor(SensorPort.S2, true);
+		//pilot.setTravelSpeed(2);
+		//tracker.start();
 
 		System.out
 				.println("Please run 'python tracker.py' and select the colour");
 
-		// wait until the tracker has made a connection to the camera
-		while (!tracker.hasConnection)
-			Delay.msDelay(500);
-
+		// wait until the tracker has made a connection to the project
+		//while (!tracker.hasConnection)
+			//Delay.msDelay(500);
+		
 		while (true) {
 			mode = ui.getMode();
 			switch (mode) {
@@ -87,7 +87,7 @@ public class Part2PC {
 				recordDataPoint();
 				break;
 			case Pause:
-
+				// do nothing, because paused!
 				break;
 			case Test:
 				if (weka == null) {
@@ -95,6 +95,23 @@ public class Part2PC {
 					weka = new WekaHandler(arfffile);
 				}
 				showTestData();
+				break;
+			case Demo:
+				// get two corners from tracker.py
+				if (weka == null) {
+					arfffile = ui.getArffname();
+					weka = new WekaHandler(arfffile);
+				}
+				// get matrix of light vals from "weka" 
+				// top: 125, 80
+				// bot: 500, 345
+				Point start = new Point(450, 300, 100);	// arbitrary light vals
+				Point end = new Point(140, 190, 100);
+				ArrayList<Cluster> clusters = weka.getClusters(125, 80, 500, 345);
+				PathFinding p = new PathFinding(clusters);
+				ArrayList<Point> path = p.findPath(start, end);
+				System.out.println(path);
+				ui.mode = UIHandler.Mode.Pause;
 				break;
 			default:
 			}
@@ -113,8 +130,8 @@ public class Part2PC {
 		System.out.println("x: " + x + " y: " + y + " theta: " + theta);
 		System.out.println("trackerx: " + targetx + " trackery: " + targety);
 		System.out.println("light: " + l);
-		int cluster = weka.getSomCluster(x, y);
-		System.out.println("Cluster num: " + cluster);
+		//int cluster = weka.getClusterNum(x, y);
+		//System.out.println("Cluster num: " + cluster);
 	}
 
 	public void recordDataPoint() {

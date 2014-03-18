@@ -1,20 +1,14 @@
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
-//Here's a class for a simple GUI that uses a JFrame
-//to hold to JTextAreas - one will listen for the key events
-//and the other will sit inside a JScrollPane providing feedback
-//about the KeyListener events being triggered
-
 public class UIHandler {
 
 	public static enum Mode {
-		Record, Pause, Test
+		Record, Pause, Test, Demo
 	}
 
 	public String arfffile = null;
@@ -48,6 +42,7 @@ public class UIHandler {
 		cmdText.append("\t'r' to enter record mode\n");
 		cmdText.append("\t'p' to pause\n");
 		cmdText.append("\t's' to save recorded data from record mode\n");
+		cmdText.append("\t'd' to demo part 2");
 
 		// add a keylistener to the text box
 		cmdText.addKeyListener(new KeyListener() {
@@ -65,6 +60,9 @@ public class UIHandler {
 					break;
 				case 's':
 					parent.saveData();
+					break;
+				case 'd':
+					mode = Mode.Demo;
 					break;
 				default:
 				}
@@ -84,24 +82,10 @@ public class UIHandler {
 		guiFrame.add(modeDisplay, BorderLayout.SOUTH);
 		guiFrame.setVisible(true);
 	}
-
-	private void getArffFromUser() {
-		final JFileChooser fc = new JFileChooser();
-
-		if (fc.showOpenDialog(guiFrame) == JFileChooser.APPROVE_OPTION) {
-			try {
-				this.arfffile = fc.getSelectedFile().getPath();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			System.out.println("Error getting arff filename");
-		}
-	}
 	
 	public String getArffname() {
 		if (arfffile == null)
-			getArffFromUser();
+			arfffile = "centerdata.arff";
 		return this.arfffile;
 	}
 	

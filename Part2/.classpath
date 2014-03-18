@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path=""/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/chirp/Desktop/Andrew_Timothy_Nadia/CS499Assignment3/Part2/json-simple-1.1.1.jar"/>
-	<classpathentry kind="con" path="org.lejos.nxt.ldt.LEJOS_LIBRARY_CONTAINER/pc"/>
-	<classpathentry kind="lib" path="/home/chirp/Desktop/Andrew_Timothy_Nadia/CS499Assignment3/Part2/weka-3-7-10/weka.jar"/>
-	<classpathentry kind="lib" path="/home/chirp/Desktop/Andrew_Timothy_Nadia/CS499Assignment3/Part2/weka-3-7-10/SelfOrganizingMap.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="org.lejos.nxt.ldt.LEJOS_LIBRARY_CONTAINER/pc"/>
+	<classpathentry kind="lib" path="json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="weka-3-7-10/SelfOrganizingMap.jar"/>
+	<classpathentry kind="lib" path="weka-3-7-10/weka.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
