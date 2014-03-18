@@ -1,6 +1,8 @@
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
+
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -16,6 +18,7 @@ public class UIHandler {
 	
 	Part2PC parent;
 	JFrame guiFrame;
+	PathFrame imageFrame;
 	JTextArea cmdText;
 	JTextArea modeDisplay;
 
@@ -70,14 +73,11 @@ public class UIHandler {
 			}
 
 			@Override
-			public void keyReleased(KeyEvent e) {
-			}
+			public void keyReleased(KeyEvent e) {}
 
 			@Override
-			public void keyTyped(KeyEvent e) {
-			}
+			public void keyTyped(KeyEvent e) {}
 		});
-
 		guiFrame.add(cmdText, BorderLayout.NORTH);
 		guiFrame.add(modeDisplay, BorderLayout.SOUTH);
 		guiFrame.setVisible(true);
@@ -93,6 +93,10 @@ public class UIHandler {
 		modeDisplay.setText("Current Mode: [" + mode.toString() + "]");
 	}
 
+	public void drawPath(ArrayList<Point> path, Point topleft, Point topright) {
+		imageFrame = new PathFrame(path);
+	}
+	
 	public Mode getMode() {
 		return mode;
 	}

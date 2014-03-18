@@ -105,11 +105,14 @@ public class Part2PC {
 				// get matrix of light vals from "weka" 
 				// top: 125, 80
 				// bot: 500, 345
+				Point topleft = new Point(125, 80, 100);
+				Point topright = new Point(500, 345, 100);
 				Point start = new Point(450, 300, 100);	// arbitrary light vals
 				Point end = new Point(140, 190, 100);
 				ArrayList<Cluster> clusters = weka.getClusters(125, 80, 500, 345);
 				PathFinding p = new PathFinding(clusters);
 				ArrayList<Point> path = p.findPath(start, end);
+				ui.drawPath(path, topleft, topright);
 				System.out.println(path);
 				ui.mode = UIHandler.Mode.Pause;
 				break;

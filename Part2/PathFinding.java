@@ -66,7 +66,9 @@ public class PathFinding {
 					double dist = distBetween(home.average.x, home.average.y, 
 											   closestPoint.x, closestPoint.y);
 					if (dist <= 70.0) // MAGIC NUM FUNTIMES!
+					{
 						home.neighbors.add(j);
+					}
 				}
 			}
 		}
