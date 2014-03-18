@@ -164,7 +164,6 @@ public class JockeyControl extends JFrame {
 	}
 
 	private static int doWekaPart1EM() {
-		System.out.println(rightUltrasound.getDistance());
 		return weka.getEMCluster(rightUltrasound.getDistance());
 	}
 	
@@ -190,9 +189,12 @@ public class JockeyControl extends JFrame {
 		Delay.msDelay(delay);
 		move(MovementType.ForwardSlow, power);
 		Delay.msDelay(delay);
-		move(MovementType.TurnRight, power);
-		Delay.msDelay(delay);
-		move(MovementType.Backward, power/2);
+//		move(MovementType.TurnRight, power);
+//		Delay.msDelay(delay);
+		stahp();
+		Delay.msDelay(10);
+		straighten();
+		move(MovementType.Backward, power * 3 / 4);
 		Delay.msDelay(delay);
 
 		stahp();
@@ -207,9 +209,12 @@ public class JockeyControl extends JFrame {
 		Delay.msDelay(delay);
 		move(MovementType.ForwardSlow, power);
 		Delay.msDelay(delay);
-		move(MovementType.TurnLeft, power);
-		Delay.msDelay(delay);
-		move(MovementType.Backward, power/2);
+		//move(MovementType.TurnLeft, power);
+		//Delay.msDelay(delay);
+		stahp();
+		Delay.msDelay(10);
+		straighten();
+		move(MovementType.Backward, power * 3 / 4);
 		Delay.msDelay(delay);
 		
 		stahp();
@@ -237,7 +242,7 @@ public class JockeyControl extends JFrame {
 	}
 	
 	public static void go() {
-		int power = mode == Mode.Part4 ? MovementType.getPower(MovementType.intToMovementType(doWekaPart1EM())) : 30;
+		int power = mode == Mode.Part4 ? MovementType.getPower(MovementType.intToMovementType(doWekaPart1EM()))*2 : 30;
 		int delay = 250;
 		move(MovementType.ForwardSlow, power);
 		Delay.msDelay(delay);
@@ -448,25 +453,21 @@ public class JockeyControl extends JFrame {
 
 			switch (key) {
 			case '1':
-				if (mode != Mode.Part1EM) {
-					switchModes();
+				switchModes();
 
-					if (dataCollection) {
-						mode = Mode.Part1EM;
-					} else if (resetWeka()) {
-						mode = Mode.Part1EM;
-					}
+				if (dataCollection) {
+					mode = Mode.Part1EM;
+				} else if (resetWeka()) {
+					mode = Mode.Part1EM;
 				}
 				break;
 			case '2':
-				if (mode != Mode.Part1KM) {
-					switchModes();
+				switchModes();
 
-					if (dataCollection) {
-						mode = Mode.Part1KM;
-					} else if (resetWeka()) {
-						mode = Mode.Part1KM;
-					}
+				if (dataCollection) {
+					mode = Mode.Part1KM;
+				} else if (resetWeka()) {
+					mode = Mode.Part1KM;
 				}
 				break;
 				

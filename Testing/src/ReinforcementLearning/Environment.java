@@ -75,7 +75,8 @@ public class Environment extends AbstractEnvironmentSingle {
 		JockeyState initial = (JockeyState) s1;
 		JockeyState result = (JockeyState) s2;
 		JockeyAction ja = (JockeyAction) a;
-		int reward = 0;
+		
+		int reward = -10;
 
 		if (result.onTape) {
 			System.out.print("Custom reward value: ");
@@ -84,25 +85,38 @@ public class Environment extends AbstractEnvironmentSingle {
 			reward += input;
 		}
 
-		if (initial.orientation == Orientation.Proper
-				&& initial.distance == Distance.Proper
-				&& result.orientation == Orientation.Proper
-				&& result.distance == Distance.Proper) {
-			// Our greatest reward should be for maintaining the right course
-			return ja.action == Action.Forward ? 50 : 20;
-		} else if (result.orientation == Orientation.Proper
-				&& result.distance == Distance.Proper) {
-			return 10;
-		} else if (result.orientation == Orientation.Proper) {
-			reward -= 5;
+//		if (initial.orientation == Orientation.Proper && initial.distance == Distance.Proper
+//				&& result.orientation == Orientation.Proper && result.distance == Distance.Proper) {
+//			// Our greatest reward should be for maintaining the right course
+//			return ja.action == Action.Forward ? 50 : 20;
+//		} else if (result.orientation == Orientation.Proper
+//				&& result.distance == Distance.Proper) {
+//			return 10;
+//		} else if (result.orientation == Orientation.Proper) {
+//			reward -= 5;
+//		}
+//
+//		if (initial.distance == Distance.TooClose && ja.action != Action.GoRight
+//				|| initial.distance == Distance.TooFar && ja.action != Action.GoLeft) {
+//			reward -= 10;
+//		}
+		
+		
+		
+		if (initial.distance == Distance.Proper) {
+			// Good job, Jockey!
+			if (ja.action == Action.Forward) {
+				reward += 50;
+			}
 		}
-
+		else {
+			reward -= getDistanceFromWall();
+		}
+		
 		if (initial.distance == Distance.TooClose && ja.action != Action.GoRight
 				|| initial.distance == Distance.TooFar && ja.action != Action.GoLeft) {
 			reward -= 10;
 		}
-
-		reward -= 10;
 
 		return reward;
 	}
@@ -165,5 +179,13 @@ public class Environment extends AbstractEnvironmentSingle {
 	// Tests whether two distances are equal within the given tolerance
 	private boolean distsEqual(int a, int b) {
 		return Math.abs(a - b) <= tolerance;
+	}
+	
+	private double getDistanceFromWall() {
+		int front = JockeyControl.getFrontDistance();
+		int back = JockeyControl.getBackDistance();
+		double average = (front + back) / 2.0;
+		
+		return Math.abs(average - middleDist);
 	}
 }
